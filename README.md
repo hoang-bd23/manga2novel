@@ -50,7 +50,7 @@ graph TD
     Server -.->|2. Access API| UserBrowser[(Thư mục Local trên máy User)]
 ```
 
-* **VPC Network:** App Server VPS (`10.0.1.10`) và Database VPS (`10.0.1.20`) giao tiếp trực tiếp qua mạng Private nội bộ để đảm bảo tốc độ tối đa và triệt tiêu nguy cơ bị tấn công cổng DB từ mạng công cộng.
+* **VPC Network:** App Server VPS (`192.168.10.11`) và Database VPS (`192.168.10.12`) giao tiếp trực tiếp qua mạng Private nội bộ thuộc subnet **hoang-subnet-1** (CIDR `192.168.10.0/25`) nằm trong mạng **hoang-vpc** (CIDR `192.168.10.0/24`) để đảm bảo tốc độ tối đa và triệt tiêu nguy cơ bị tấn công cổng DB từ mạng công cộng.
 * **Cloudflare Proxy:** Ẩn giấu IP thật của App Server, kích hoạt SSL Full mã hóa HTTPS từ Client đến máy chủ CMC.
 
 ### 2.2. Thiết Kế Mô Hình Lưu Trữ Vật Lý & Database Mapping
@@ -90,18 +90,18 @@ npm install pg @aws-sdk/client-s3 next-auth
 ```
 
 ### Bước 2: Thiết lập Cơ sở dữ liệu PostgreSQL (Database VPS)
-1. Trên **Database VPS** (`10.0.1.20`), mở file `/etc/postgresql/<version>/main/postgresql.conf` và đổi địa chỉ lắng nghe:
+1. Trên **Database VPS** (`192.168.10.12`), mở file `/etc/postgresql/<version>/main/postgresql.conf` và đổi địa chỉ lắng nghe:
    ```conf
    listen_addresses = '*'
    ```
 2. Mở file `/etc/postgresql/<version>/main/pg_hba.conf` để chỉ cho phép duy nhất **Private IP** của App Server kết nối:
    ```conf
    # TYPE  DATABASE        USER            ADDRESS                 METHOD
-   host    all             all             10.0.1.10/32            scram-sha-256
+   host    all             all             192.168.10.11/32            scram-sha-256
    ```
 3. Mở cổng tường lửa hệ điều hành:
    ```bash
-   sudo ufw allow from 10.0.1.10 to any port 5432
+   sudo ufw allow from 192.168.10.11 to any port 5432
    sudo ufw enable
    sudo systemctl restart postgresql
    ```
@@ -110,7 +110,7 @@ npm install pg @aws-sdk/client-s3 next-auth
 Tạo tệp tin `.env` bên cạnh dự án Next.js trên App Server với nội dung sau:
 ```env
 # Kết nối PostgreSQL chạy trên Database VPS (Dùng IP nội bộ mạng VPC)
-DATABASE_URL="postgresql://db_user:db_password@10.0.1.20:5432/manga2novel"
+DATABASE_URL="postgresql://db_user:db_password@192.168.10.12:5432/manga2novel"
 
 # Khóa bí mật dùng để mã hóa API keys & S3 credentials ở phía server (độ dài đúng 32 ký tự)
 ENCRYPTION_KEY="thay_doi_chuoi_bi_mat_32_ki_tu_nay"
@@ -127,25 +127,25 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ### Bước 4: Cấu hình Lưu trữ Phương án 3 (VPS Storage)
 
 #### 📌 Trường hợp 3.1: VPS Storage cùng mạng VPC (Sử dụng NFS Mount)
-1. **Trên VPS Storage** (NFS Server, Private IP `10.0.1.30`):
+1. **Trên VPS Storage** (NFS Server, Private IP `192.168.10.13`):
    ```bash
    sudo apt install nfs-kernel-server -y
    sudo mkdir -p /var/manga_storage
    sudo chown nobody:nogroup /var/manga_storage && sudo chmod 777 /var/manga_storage
    # Thêm quyền vào /etc/exports
-   /var/manga_storage    10.0.1.10(rw,sync,no_subtree_check,no_root_squash)
+   /var/manga_storage    192.168.10.11(rw,sync,no_subtree_check,no_root_squash)
    # Restart
    sudo exportfs -a && sudo systemctl restart nfs-kernel-server
-   sudo ufw allow from 10.0.1.10 to any port 2049
+   sudo ufw allow from 192.168.10.11 to any port 2049
    ```
-2. **Trên VPS App Server** (NFS Client, Private IP `10.0.1.10`):
+2. **Trên VPS App Server** (NFS Client, Private IP `192.168.10.11`):
    ```bash
    sudo apt install nfs-common -y
    cd /var/www/manga2novel/public
    mkdir -p uploads
-   sudo mount 10.0.1.30:/var/manga_storage /var/www/manga2novel/public/uploads
+   sudo mount 192.168.10.13:/var/manga_storage /var/www/manga2novel/public/uploads
    # Mount tự động khi reboot bằng cách thêm dòng dưới vào /etc/fstab:
-   10.0.1.30:/var/manga_storage    /var/www/manga2novel/public/uploads    nfs    defaults,timeo=900,retrans=5,_netdev    0    0
+   192.168.10.13:/var/manga_storage    /var/www/manga2novel/public/uploads    nfs    defaults,timeo=900,retrans=5,_netdev    0    0
    ```
 
 #### 📌 Trường hợp 3.2: VPS Storage khác mạng (Sử dụng Cloudflare Tunnel & API)
