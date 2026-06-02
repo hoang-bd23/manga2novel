@@ -226,23 +226,66 @@ npm install pg @aws-sdk/client-s3 next-auth
    sudo ufw enable
    ```
 
-### Bước 3: Cấu hình biến môi trường (`.env`)
-Tạo tệp tin `.env` bên cạnh dự án Next.js trên App Server với nội dung sau:
+### Bước 3: Cấu hình biến môi trường (`.env`) trên App Server
+
+Tệp tin `.env` chứa toàn bộ cấu hình kết nối, mã hóa và bảo mật của dự án. Bạn cần khởi tạo và cấu hình tệp tin này trực tiếp tại **thư mục gốc của mã nguồn** trên App Server.
+
+#### 📁 3.1. Các bước tạo tệp `.env` bằng dòng lệnh:
+1. **Di chuyển vào thư mục gốc của dự án** (Nơi chứa file `package.json` và thư mục `src`):
+   ```bash
+   cd /var/www/manga2novel
+   ```
+2. **Nhân bản tệp cấu hình mẫu `.env.example` thành tệp hoạt động chính thức `.env`:**
+   ```bash
+   cp .env.example .env
+   ```
+3. **Mở tệp `.env` để chỉnh sửa cấu hình bằng trình soạn thảo `nano`:**
+   ```bash
+   nano .env
+   ```
+
+---
+
+#### ✏️ 3.2. Các thông số cần thay đổi bên trong tệp `.env`:
+
+Khi tệp `.env` mở ra, bạn hãy di chuyển con trỏ chuột bằng các phím mũi tên và tiến hành chỉnh sửa các biến sau đây cho phù hợp với hạ tầng mạng và thông số của bạn:
+
 ```env
-# Kết nối PostgreSQL chạy trên Database VPS (Dùng IP nội bộ mạng VPC)
+# =========================================================================
+# 1. KẾT NỐI DATABASE POSTGRESQL (CỦA VPS DATABASE)
+# =========================================================================
+# Định dạng: postgresql://[Tên_User]:[Mật_Khẩu]@[IP_Nội_Bộ_DB_VPS]:5432/[Tên_Database]
+# - Thay 'db_user' và 'db_password' bằng thông số bạn đã tạo ở Bước 2.3
+# - Giữ nguyên IP '192.168.10.12' (IP nội bộ của Database VPS)
 DATABASE_URL="postgresql://db_user:db_password@192.168.10.12:5432/manga2novel"
 
-# Khóa bí mật dùng để mã hóa API keys & S3 credentials ở phía server (độ dài đúng 32 ký tự)
+# =========================================================================
+# 2. KHÓA MÃ HÓA BẢO MẬT API KEYS
+# =========================================================================
+# Một chuỗi ký tự ngẫu nhiên, không dấu, viết liền có độ dài BẮT BUỘC ĐÚNG 32 KÝ TỰ.
+# Dùng để mã hóa đối xứng AES-256-GCM các API key của người dùng trước khi lưu vào DB.
+# Ví dụ: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
 ENCRYPTION_KEY="thay_doi_chuoi_bi_mat_32_ki_tu_nay"
 
-# Cấu hình NextAuth bảo mật Google Login
+# =========================================================================
+# 3. CẤU HÌNH NEXTAUTH GOOGLE LOGIN (ĐĂNG NHẬP GOOGLE)
+# =========================================================================
+# - NEXTAUTH_URL: Đường dẫn tên miền chạy web của bạn (phải bắt đầu bằng https://)
+#   Ví dụ: "https://yourdomain.com"
 NEXTAUTH_URL="https://mangascribe.com"
+
+# - NEXTAUTH_SECRET: Một chuỗi ký tự ngẫu nhiên dùng để ký và mã hóa cookie phiên làm việc.
+#   Bạn có thể sinh nhanh chuỗi này bằng cách chạy lệnh: openssl rand -base64 32
 NEXTAUTH_SECRET="chuoi_ngau_nhien_ma_hoa_session_cookie"
 
-# Khởi tạo thông tin OAuth trên Google Cloud Console
+# - GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET:
+#   Lấy trực tiếp từ tài khoản Google Cloud Console -> APIs & Services -> Credentials -> OAuth 2.0 Client IDs.
+#   (Nhớ cấu hình Redirect URI trên Google Console là: https://yourdomain.com/api/auth/callback/google)
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ```
+
+*Sau khi chỉnh sửa xong, nhấn **`Ctrl + O`** ➔ **Enter** để lưu file, rồi nhấn **`Ctrl + X`** để thoát khỏi nano.*
 
 ### Bước 4: Cấu hình Lưu trữ Phương án 3 (VPS Storage)
 
