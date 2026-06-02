@@ -308,6 +308,22 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
      }
    });
 
+   app.delete('/api/upload', (req, res) => {
+     const { projectId, secretToken } = req.body;
+     if (secretToken !== SECRET_TOKEN) return res.status(401).send('Unauthorized');
+     
+     try {
+       const projectDir = path.join(STORAGE_DIR, 'projects', projectId);
+       if (fs.existsSync(projectDir)) {
+         fs.rmSync(projectDir, { recursive: true, force: true });
+         console.log(`[Storage VPS] Deleted project directory: ${projectId}`);
+       }
+       res.json({ success: true });
+     } catch (error) {
+       res.status(500).send(error.message);
+     }
+   });
+
    app.listen(PORT, () => console.log(`Receiver running on port ${PORT}`));
    ```
    Chạy nền vĩnh viễn với PM2:

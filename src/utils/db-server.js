@@ -257,6 +257,44 @@ export async function getProject(id, userId = DEFAULT_USER_ID) {
 
 export async function deleteProject(id, userId = DEFAULT_USER_ID) {
   const { isPostgres, pgPool } = await initDb();
+  
+  // Clean up physical assets from storage VPS/Disk if storage type is server
+  try {
+    const storageConfigs = await getStorageConfigs(userId, true);
+    const storageType = storageConfigs.type || 'device';
+    
+    if (storageType === 'server') {
+      const isRemote = storageConfigs.endpoint && (storageConfigs.endpoint.startsWith('http://') || storageConfigs.endpoint.startsWith('https://'));
+      
+      if (isRemote) {
+        // Send a delete request to the Remote VPS Storage API (Trường hợp 3.2)
+        console.log(`[Storage Delete] Deleting project ${id} assets on Remote Storage VPS at ${storageConfigs.endpoint}...`);
+        await fetch(storageConfigs.endpoint, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            projectId: id,
+            secretToken: storageConfigs.secretAccessKey // Automatically decrypted
+          })
+        }).catch(err => console.error('[Storage Delete] Failed to connect to Remote Storage VPS for deletion:', err.message));
+      } else {
+        // Delete locally (Trường hợp 3.1 / NFS)
+        console.log(`[Storage Delete] Deleting project ${id} assets locally on App Server...`);
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'projects', id);
+        if (fs.existsSync(uploadDir)) {
+          await fs.promises.rm(uploadDir, { recursive: true, force: true }).catch(err => {
+            console.error('[Storage Delete] Failed to delete local project directory:', err);
+          });
+        }
+      }
+    }
+  } catch (storageErr) {
+    console.error('[Storage Delete] Error during physical assets cleanup:', storageErr.message);
+  }
+
+  // Database Deletion
   if (isPostgres) {
     await pgPool.query(
       `DELETE FROM projects WHERE id = $1 AND user_id = $2`,
