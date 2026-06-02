@@ -193,22 +193,25 @@ npm install pg @aws-sdk/client-s3 next-auth
    ALTER DATABASE manga2novel OWNER TO db_user;
    \q
    ```
-3. **Cấu hình cho phép kết nối từ mạng nội bộ:**
-   - Mở file `/etc/postgresql/<version>/main/postgresql.conf`:
-     Tìm và sửa cấu hình địa chỉ lắng nghe thành dấu `*` để mở kết nối mạng:
-     ```conf
-     listen_addresses = '*'
-     ```
-   - Mở file `/etc/postgresql/<version>/main/pg_hba.conf`:
-     Khai báo chỉ cho phép duy nhất IP nội bộ của App Server (`192.168.10.11`) được quyền kết nối:
-     ```conf
-     # TYPE  DATABASE        USER            ADDRESS                 METHOD
-     host    all             all             192.168.10.11/32        scram-sha-256
-     ```
-   - Khởi động lại PostgreSQL:
+3. **Cấu hình cho phép kết nối từ mạng nội bộ (Chọn 1 trong 2 cách):**
+   * **Cách A: Chạy câu lệnh nhanh tự động (Khuyên dùng 🌟):**
+     Copy và dán toàn bộ cụm lệnh này vào terminal của VPS Database. Hệ thống sẽ tự động dò tìm phiên bản PostgreSQL, tự động ghi cấu hình vào cuối cả 2 file `postgresql.conf` & `pg_hba.conf`, rồi khởi động lại dịch vụ tức thời:
      ```bash
-     sudo systemctl restart postgresql
+     pg_ver=$(ls /etc/postgresql/ | head -n 1) && sudo sh -c "echo \"listen_addresses = '*'\" >> /etc/postgresql/$pg_ver/main/postgresql.conf" && sudo sh -c "echo 'host    all             all             192.168.10.11/32        scram-sha-256' >> /etc/postgresql/$pg_ver/main/pg_hba.conf" && sudo systemctl restart postgresql
      ```
+   * **Cách B: Chỉnh sửa thủ công từng file:**
+     - Mở file `/etc/postgresql/<version>/main/postgresql.conf`: Tìm và sửa cấu hình thành:
+       ```conf
+       listen_addresses = '*'
+       ```
+     - Mở file `/etc/postgresql/<version>/main/pg_hba.conf`: Khai báo dòng phân quyền kết nối mạng nội bộ:
+       ```conf
+       host    all             all             192.168.10.11/32        scram-sha-256
+       ```
+     - Khởi động lại PostgreSQL:
+       ```bash
+       sudo systemctl restart postgresql
+       ```
 4. **Kiểm thử kết nối mạng từ App Server sang Database VPS:**
    Trên App Server VPS (`192.168.10.11`), chạy lệnh:
    ```bash
