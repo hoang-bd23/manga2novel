@@ -89,21 +89,138 @@ Tại thư mục gốc của dự án trên máy chủ App Server, chạy lệnh
 npm install pg @aws-sdk/client-s3 next-auth
 ```
 
-### Bước 2: Thiết lập Cơ sở dữ liệu PostgreSQL (Database VPS)
-1. Trên **Database VPS** (`192.168.10.12`), mở file `/etc/postgresql/<version>/main/postgresql.conf` và đổi địa chỉ lắng nghe:
-   ```conf
-   listen_addresses = '*'
-   ```
-2. Mở file `/etc/postgresql/<version>/main/pg_hba.conf` để chỉ cho phép duy nhất **Private IP** của App Server kết nối:
-   ```conf
-   # TYPE  DATABASE        USER            ADDRESS                 METHOD
-   host    all             all             192.168.10.11/32            scram-sha-256
-   ```
-3. Mở cổng tường lửa hệ điều hành:
+### Bước 2: Thiết lập Môi trường hệ thống trên CMC Cloud VPS
+
+Để đảm bảo toàn bộ hệ thống hoạt động trơn tru, không thiếu sót bất kỳ gói thư viện hay dịch vụ hệ thống nào, dưới đây là tài liệu cấu hình chi tiết từ A-Z cho từng máy chủ trong mạng **hoang-vpc**:
+
+#### 🛡️ Bước 2.1: Chuẩn bị & Khởi tạo chung cho các VPS
+Áp dụng cho cả App Server (`192.168.10.11`), Database VPS (`192.168.10.12`), và Storage VPS (`192.168.10.13`):
+1. **Cập nhật danh sách gói hệ thống và nâng cấp:**
    ```bash
+   sudo apt update && sudo apt upgrade -y
+   ```
+2. **Cài đặt các gói công cụ thiết yếu:**
+   ```bash
+   sudo apt install curl wget build-essential software-properties-common ufw -y
+   ```
+3. **Đồng bộ hóa múi giờ hệ thống (GMT+7):**
+   ```bash
+   sudo timedatectl set-timezone Asia/Ho_Chi_Minh
+   ```
+
+#### 🌐 Bước 2.2: Thiết lập App Server VPS (`192.168.10.11`)
+Đây là máy chủ chạy ứng dụng Next.js chính, giao tiếp với bên ngoài qua Cloudflare và kết nối nội bộ với Database/Storage.
+1. **Cài đặt Git để quản lý và clone mã nguồn:**
+   ```bash
+   sudo apt install git -y
+   ```
+2. **Cài đặt Node.js v20 LTS và NPM thông qua kho NodeSource:**
+   ```bash
+   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+   sudo apt install nodejs -y
+   # Xác nhận phiên bản thành công
+   node -v && npm -v
+   ```
+3. **Cài đặt PM2 (Quản lý tiến trình chạy ngầm Next.js):**
+   ```bash
+   sudo npm install -g pm2
+   ```
+4. **Cài đặt và cấu hình Web Server Nginx (Reverse Proxy):**
+   - Cài đặt Nginx:
+     ```bash
+     sudo apt install nginx -y
+     sudo systemctl enable nginx
+     sudo systemctl start nginx
+     ```
+   - Cấu hình Reverse Proxy từ cổng 80 sang cổng Next.js 3000:
+     Tạo file cấu hình `/etc/nginx/sites-available/manga2novel` và dán cấu hình sau:
+     ```nginx
+     server {
+         listen 80;
+         server_name yourdomain.com www.yourdomain.com; # Thay thế bằng domain Cloudflare của bạn
+
+         client_max_body_size 50M; # Cho phép upload tệp truyện tranh dung lượng lớn
+
+         location / {
+             proxy_pass http://127.0.0.1:3000;
+             proxy_http_version 1.1;
+             proxy_set_header Upgrade $http_upgrade;
+             proxy_set_header Connection 'upgrade';
+             proxy_set_header Host $host;
+             proxy_cache_bypass $http_upgrade;
+             proxy_set_header X-Real-IP $remote_addr;
+             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+             proxy_set_header X-Forwarded-Proto $scheme;
+         }
+     }
+     ```
+     Kích hoạt cấu hình và khởi động lại Nginx:
+     ```bash
+     sudo ln -s /etc/nginx/sites-available/manga2novel /etc/nginx/sites-enabled/
+     sudo rm -f /etc/nginx/sites-enabled/default
+     sudo nginx -t && sudo systemctl restart nginx
+     ```
+5. **Cài đặt NFS Client (Để mount đĩa Storage VPS cùng VPC - Option 3.1):**
+   ```bash
+   sudo apt install nfs-common -y
+   ```
+6. **Thiết lập tường lửa (UFW) bảo mật:**
+   Cho phép kết nối HTTP/HTTPS công khai và SSH quản trị:
+   ```bash
+   sudo ufw allow OpenSSH
+   sudo ufw allow 'Nginx Full'
+   sudo ufw enable
+   ```
+
+#### 🗄️ Bước 2.3: Thiết lập Database VPS (`192.168.10.12`)
+Đây là máy chủ cơ sở dữ liệu PostgreSQL an toàn tuyệt đối, chỉ nhận truy vấn nội bộ từ App Server.
+1. **Cài đặt PostgreSQL server:**
+   ```bash
+   sudo apt install postgresql postgresql-contrib -y
+   sudo systemctl enable postgresql
+   sudo systemctl start postgresql
+   ```
+2. **Khởi tạo User & Cơ sở dữ liệu cho dự án:**
+   Đăng nhập vào trình quản trị PostgreSQL:
+   ```bash
+   sudo -i -u postgres psql
+   ```
+   Chạy các câu lệnh SQL sau để tạo database và cấp quyền sở hữu (hãy thay thế mật khẩu bằng chuỗi bảo mật của bạn):
+   ```sql
+   CREATE DATABASE manga2novel;
+   CREATE USER db_user WITH PASSWORD 'db_password';
+   GRANT ALL PRIVILEGES ON DATABASE manga2novel TO db_user;
+   ALTER DATABASE manga2novel OWNER TO db_user;
+   \q
+   ```
+3. **Cấu hình cho phép kết nối từ mạng nội bộ:**
+   - Mở file `/etc/postgresql/<version>/main/postgresql.conf`:
+     Tìm và sửa cấu hình địa chỉ lắng nghe thành dấu `*` để mở kết nối mạng:
+     ```conf
+     listen_addresses = '*'
+     ```
+   - Mở file `/etc/postgresql/<version>/main/pg_hba.conf`:
+     Khai báo chỉ cho phép duy nhất IP nội bộ của App Server (`192.168.10.11`) được quyền kết nối:
+     ```conf
+     # TYPE  DATABASE        USER            ADDRESS                 METHOD
+     host    all             all             192.168.10.11/32        scram-sha-256
+     ```
+   - Khởi động lại PostgreSQL:
+     ```bash
+     sudo systemctl restart postgresql
+     ```
+4. **Kiểm thử kết nối mạng từ App Server sang Database VPS:**
+   Trên App Server VPS (`192.168.10.11`), chạy lệnh:
+   ```bash
+   nc -zv 192.168.10.12 5432
+   ```
+   *Kết quả thành công sẽ báo: Connection to 192.168.10.12 5432 port [tcp/postgresql] succeeded!*
+5. **Cấu hình tường lửa UFW bảo mật cổng 5432:**
+   Chỉ chấp nhận kết nối cổng `5432` từ IP nội bộ của App Server:
+   ```bash
+   sudo ufw allow OpenSSH
    sudo ufw allow from 192.168.10.11 to any port 5432
    sudo ufw enable
-   sudo systemctl restart postgresql
    ```
 
 ### Bước 3: Cấu hình biến môi trường (`.env`)
