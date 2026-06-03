@@ -132,28 +132,56 @@ npm install pg @aws-sdk/client-s3 next-auth
      sudo systemctl enable nginx
      sudo systemctl start nginx
      ```
-   - Cấu hình Reverse Proxy từ cổng 80 sang cổng Next.js 3000:
-     Tạo file cấu hình `/etc/nginx/sites-available/manga2novel` và dán cấu hình sau:
-     ```nginx
-     server {
-         listen 80;
-         server_name yourdomain.com www.yourdomain.com; # Thay thế bằng domain Cloudflare của bạn
+   - Cấu hình Reverse Proxy từ cổng 80 sang cổng Next.js 3000 (Chọn 1 trong 2 cách):
 
-         client_max_body_size 50M; # Cho phép upload tệp truyện tranh dung lượng lớn
+     > ⚠️ **Quan trọng:** Giá trị `server_name` **phải là tên miền thực tế** của bạn (ví dụ: `manga2novel.buiduchoang.dev`), không phải `yourdomain.com`. Certbot SSL ở bước sau sẽ tự động tìm kiếm `server_name` này để cài chứng chỉ.
 
-         location / {
-             proxy_pass http://127.0.0.1:3000;
-             proxy_http_version 1.1;
-             proxy_set_header Upgrade $http_upgrade;
-             proxy_set_header Connection 'upgrade';
-             proxy_set_header Host $host;
-             proxy_cache_bypass $http_upgrade;
-             proxy_set_header X-Real-IP $remote_addr;
-             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-             proxy_set_header X-Forwarded-Proto $scheme;
-         }
-     }
-     ```
+     * **Cách A: Chạy câu lệnh nhanh tự động (Khuyên dùng 🌟):**
+       Sao chép và chạy lệnh sau để tự động tạo file cấu hình `/etc/nginx/sites-available/manga2novel` mà không cần mở file:
+       ```bash
+       sudo sh -c "cat << 'EOF' > /etc/nginx/sites-available/manga2novel
+       server {
+           listen 80;
+           server_name yourdomain.com; # ← THAY BẰNG DOMAIN THỰC TẾ CỦA BẠN
+
+           client_max_body_size 50M; # Cho phép upload tệp truyện tranh dung lượng lớn
+
+           location / {
+               proxy_pass http://127.0.0.1:3000;
+               proxy_http_version 1.1;
+               proxy_set_header Upgrade \$http_upgrade;
+               proxy_set_header Connection 'upgrade';
+               proxy_set_header Host \$host;
+               proxy_cache_bypass \$http_upgrade;
+               proxy_set_header X-Real-IP \$remote_addr;
+               proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+               proxy_set_header X-Forwarded-Proto \$scheme;
+           }
+       }
+       EOF"
+       ```
+     * **Cách B: Chỉnh sửa thủ công:**
+       Tạo và chỉnh sửa file `/etc/nginx/sites-available/manga2novel` rồi điền cấu hình sau:
+       ```nginx
+       server {
+           listen 80;
+           server_name yourdomain.com www.yourdomain.com; # Thay thế bằng domain Cloudflare của bạn
+
+           client_max_body_size 50M; # Cho phép upload tệp truyện tranh dung lượng lớn
+
+           location / {
+               proxy_pass http://127.0.0.1:3000;
+               proxy_http_version 1.1;
+               proxy_set_header Upgrade $http_upgrade;
+               proxy_set_header Connection 'upgrade';
+               proxy_set_header Host $host;
+               proxy_cache_bypass $http_upgrade;
+               proxy_set_header X-Real-IP $remote_addr;
+               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+               proxy_set_header X-Forwarded-Proto $scheme;
+           }
+       }
+       ```
      Kích hoạt cấu hình và khởi động lại Nginx:
      ```bash
      sudo ln -s /etc/nginx/sites-available/manga2novel /etc/nginx/sites-enabled/
@@ -171,6 +199,33 @@ npm install pg @aws-sdk/client-s3 next-auth
    sudo ufw allow 'Nginx Full'
    sudo ufw enable
    ```
+7. **Cài đặt SSL/HTTPS với Let's Encrypt (Certbot) - Khuyên dùng 🌟:**
+   Sau khi DNS đã trỏ đúng về IP Public của App Server và Nginx đang chạy:
+   ```bash
+   # Cài đặt Certbot và plugin Nginx
+   sudo apt install certbot python3-certbot-nginx -y
+
+   # Cấp và cài đặt chứng chỉ SSL tự động vào Nginx
+   # Thay 'yourdomain.com' bằng tên miền thực tế của bạn
+   sudo certbot --nginx -d yourdomain.com
+   ```
+   Trong quá trình chạy, Certbot sẽ hỏi:
+   - **Email:** Nhập email để nhận thông báo hết hạn chứng chỉ.
+   - **Agree to terms:** Nhập `Y`
+   - **Redirect HTTP → HTTPS:** Chọn `2` (Redirect - khuyên dùng)
+
+   Sau khi cài xong, Certbot sẽ tự động cập nhật Nginx để lắng nghe cổng 443 và thiết lập lịch tự động gia hạn chứng chỉ (hết hạn sau 90 ngày):
+   ```bash
+   # Kiểm tra tự động gia hạn hoạt động đúng
+   sudo certbot renew --dry-run
+
+   # Kiểm tra và reload Nginx sau khi cài SSL
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+   > 📌 **Cấu hình Cloudflare sau khi cài SSL:**
+   > Vào **Cloudflare Dashboard → SSL/TLS → Overview** → Chuyển chế độ sang **Full (strict)**.
+   > Đây là chế độ bảo mật cao nhất: Cloudflare xác minh chứng chỉ SSL hợp lệ trên máy chủ gốc trước khi chấp nhận kết nối.
 
 #### 🗄️ Bước 2.3: Thiết lập Database VPS (`192.168.10.12`)
 Đây là máy chủ cơ sở dữ liệu PostgreSQL an toàn tuyệt đối, chỉ nhận truy vấn nội bộ từ App Server.
@@ -230,33 +285,21 @@ npm install pg @aws-sdk/client-s3 next-auth
 
 Tệp tin `.env` chứa toàn bộ cấu hình kết nối, mã hóa và bảo mật của dự án. Bạn cần khởi tạo và cấu hình tệp tin này trực tiếp tại **thư mục gốc của mã nguồn** trên App Server.
 
-#### 📁 3.1. Các bước tạo tệp `.env` bằng dòng lệnh:
-1. **Di chuyển vào thư mục gốc của dự án** (Nơi chứa file `package.json` và thư mục `src`):
-   ```bash
-   cd /var/www/manga2novel
-   ```
-2. **Nhân bản tệp cấu hình mẫu `.env.example` thành tệp hoạt động chính thức `.env`:**
-   ```bash
-   cp .env.example .env
-   ```
-3. **Mở tệp `.env` để chỉnh sửa cấu hình bằng trình soạn thảo `nano`:**
-   ```bash
-   nano .env
-   ```
+#### 📁 3.1. Các phương pháp cấu hình tệp `.env`:
 
----
+Chọn **một trong hai** phương pháp dưới đây để tạo và cấu hình tệp `.env` tại thư mục gốc của dự án (`/var/www/manga2novel`):
 
-#### ✏️ 3.2. Các thông số cần thay đổi bên trong tệp `.env`:
+##### Cách A: Khởi tạo cấu hình nhanh tự động bằng một câu lệnh (Khuyên dùng 🌟)
+Hãy thay thế các giá trị bên trong dòng lệnh dưới đây bằng thông tin thực tế của bạn (như mật khẩu PostgreSQL, tên miền, và Google Client ID/Secret), sau đó sao chép và dán toàn bộ vào terminal của VPS App Server để tạo tệp cấu hình ngay lập tức:
 
-Khi tệp `.env` mở ra, bạn hãy di chuyển con trỏ chuột bằng các phím mũi tên và tiến hành chỉnh sửa các biến sau đây cho phù hợp với hạ tầng mạng và thông số của bạn:
-
-```env
+```bash
+cat << 'EOF' > .env
 # =========================================================================
 # 1. KẾT NỐI DATABASE POSTGRESQL (CỦA VPS DATABASE)
 # =========================================================================
 # Định dạng: postgresql://[Tên_User]:[Mật_Khẩu]@[IP_Nội_Bộ_DB_VPS]:5432/[Tên_Database]
-# - Thay 'db_user' và 'db_password' bằng thông số bạn đã tạo ở Bước 2.3
-# - Giữ nguyên IP '192.168.10.12' (IP nội bộ của Database VPS)
+# - Hãy thay 'db_user' và 'db_password' bằng thông số bạn đã tạo ở Bước 2.3
+# - IP '192.168.10.12' là IP nội bộ của Database VPS
 DATABASE_URL="postgresql://db_user:db_password@192.168.10.12:5432/manga2novel"
 
 # =========================================================================
@@ -264,7 +307,7 @@ DATABASE_URL="postgresql://db_user:db_password@192.168.10.12:5432/manga2novel"
 # =========================================================================
 # Một chuỗi ký tự ngẫu nhiên, không dấu, viết liền có độ dài BẮT BUỘC ĐÚNG 32 KÝ TỰ.
 # Dùng để mã hóa đối xứng AES-256-GCM các API key của người dùng trước khi lưu vào DB.
-# Ví dụ: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+# (Có thể chạy lệnh: openssl rand -hex 16 trên Linux để sinh tự động chuỗi 32 ký tự)
 ENCRYPTION_KEY="thay_doi_chuoi_bi_mat_32_ki_tu_nay"
 
 # =========================================================================
@@ -272,10 +315,11 @@ ENCRYPTION_KEY="thay_doi_chuoi_bi_mat_32_ki_tu_nay"
 # =========================================================================
 # - NEXTAUTH_URL: Đường dẫn tên miền chạy web của bạn (phải bắt đầu bằng https://)
 #   Ví dụ: "https://yourdomain.com"
-NEXTAUTH_URL="https://mangascribe.com"
+#   ⚠️ KHÔNG có dấu / ở cuối URL. Sai: "https://yourdomain.com/" - Đúng: "https://yourdomain.com"
+NEXTAUTH_URL="https://yourdomain.com"
 
 # - NEXTAUTH_SECRET: Một chuỗi ký tự ngẫu nhiên dùng để ký và mã hóa cookie phiên làm việc.
-#   Bạn có thể sinh nhanh chuỗi này bằng cách chạy lệnh: openssl rand -base64 32
+#   (Có thể chạy lệnh: openssl rand -base64 32 trên Linux để sinh tự động)
 NEXTAUTH_SECRET="chuoi_ngau_nhien_ma_hoa_session_cookie"
 
 # - GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET:
@@ -283,9 +327,21 @@ NEXTAUTH_SECRET="chuoi_ngau_nhien_ma_hoa_session_cookie"
 #   (Nhớ cấu hình Redirect URI trên Google Console là: https://yourdomain.com/api/auth/callback/google)
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+EOF
 ```
 
-*Sau khi chỉnh sửa xong, nhấn **`Ctrl + O`** ➔ **Enter** để lưu file, rồi nhấn **`Ctrl + X`** để thoát khỏi nano.*
+##### Cách B: Chỉnh sửa thủ công
+1. Nhân bản tệp cấu hình mẫu `.env.example` thành tệp hoạt động chính thức `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Mở tệp `.env` để chỉnh sửa cấu hình bằng trình soạn thảo `nano`:
+   ```bash
+   nano .env
+   ```
+3. Di chuyển con trỏ chuột bằng các phím mũi tên và tiến hành chỉnh sửa các biến như `DATABASE_URL`, `ENCRYPTION_KEY`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` trực tiếp bên trong file.
+4. Sau khi chỉnh sửa xong, nhấn **`Ctrl + O`** ➔ **Enter** để lưu file, rồi nhấn **`Ctrl + X`** để thoát khỏi nano.
+
 
 ### Bước 4: Cấu hình Lưu trữ Phương án 3 (VPS Storage)
 
@@ -295,9 +351,13 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
    sudo apt install nfs-kernel-server -y
    sudo mkdir -p /var/manga_storage
    sudo chown nobody:nogroup /var/manga_storage && sudo chmod 777 /var/manga_storage
-   # Thêm quyền vào /etc/exports
-   /var/manga_storage    192.168.10.11(rw,sync,no_subtree_check,no_root_squash)
-   # Restart
+   # Cấu hình cấp quyền xuất đĩa chia sẻ (Chọn 1 trong 2 cách):
+   # * Cách A: Chạy câu lệnh nhanh tự động (Khuyên dùng 🌟):
+   sudo sh -c "echo '/var/manga_storage    192.168.10.11(rw,sync,no_subtree_check,no_root_squash)' >> /etc/exports"
+   # * Cách B: Mở file /etc/exports và chèn thủ công dòng sau vào cuối:
+   # /var/manga_storage    192.168.10.11(rw,sync,no_subtree_check,no_root_squash)
+
+   # Khởi động lại dịch vụ để áp dụng:
    sudo exportfs -a && sudo systemctl restart nfs-kernel-server
    sudo ufw allow from 192.168.10.11 to any port 2049
    ```
@@ -307,8 +367,11 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
    cd /var/www/manga2novel/public
    mkdir -p uploads
    sudo mount 192.168.10.13:/var/manga_storage /var/www/manga2novel/public/uploads
-   # Mount tự động khi reboot bằng cách thêm dòng dưới vào /etc/fstab:
-   192.168.10.13:/var/manga_storage    /var/www/manga2novel/public/uploads    nfs    defaults,timeo=900,retrans=5,_netdev    0    0
+   # Cấu hình tự động mount lại đĩa khi reboot VPS (Chọn 1 trong 2 cách):
+   # * Cách A: Chạy câu lệnh nhanh tự động (Khuyên dùng 🌟):
+   sudo sh -c "echo '192.168.10.13:/var/manga_storage    /var/www/manga2novel/public/uploads    nfs    defaults,timeo=900,retrans=5,_netdev    0    0' >> /etc/fstab"
+   # * Cách B: Mở file /etc/fstab và thêm thủ công dòng sau vào cuối:
+   # 192.168.10.13:/var/manga_storage    /var/www/manga2novel/public/uploads    nfs    defaults,timeo=900,retrans=5,_netdev    0    0
    ```
 
 #### 📌 Trường hợp 3.2: VPS Storage khác mạng (Sử dụng Cloudflare Tunnel & API)
@@ -413,8 +476,20 @@ Sau khi toàn bộ hạ tầng đã được thiết lập thành công, dưới
    ```
 2. Khởi chạy máy chủ sản xuất sử dụng PM2 quản lý tiến trình:
    ```bash
-   pm2 start npm --name "manga2novel-app" -- run start
+   pm2 start npm --name "manga2novel" -- start
    pm2 save
+   ```
+3. Cấu hình PM2 tự động khởi động lại khi VPS reboot:
+   ```bash
+   pm2 startup
+   # Lệnh trên sẽ in ra một câu lệnh sudo... - hãy sao chép và chạy câu lệnh đó
+   pm2 save
+   ```
+4. Kiểm tra ứng dụng đang chạy thành công:
+   ```bash
+   pm2 status
+   pm2 logs manga2novel --lines 20
+   # Kết quả thành công: "✓ Ready in ...ms"
    ```
 
 ---

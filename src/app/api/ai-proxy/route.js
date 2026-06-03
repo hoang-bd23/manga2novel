@@ -128,12 +128,18 @@ export async function POST(req) {
     }
 
     // ==========================================
-    // 2. OPENAI, GROK, CUSTOM VISION FORWARDING
+    // 2. OPENAI, GROK, DEEPSEEK, CUSTOM VISION FORWARDING
     // ==========================================
     else {
       let defaultBaseUrl = 'https://api.openai.com/v1';
       if (resolvedProvider === 'grok') {
         defaultBaseUrl = 'https://api.x.ai/v1';
+      } else if (resolvedProvider === 'deepseek') {
+        defaultBaseUrl = 'https://api.deepseek.com/v1';
+      } else if (resolvedProvider === 'custom' && !resolvedBaseUrl) {
+        return NextResponse.json({
+          error: 'Vui lòng nhập Base URL cho nhà cung cấp Custom (ví dụ: https://api.deepseek.com/v1).'
+        }, { status: 400 });
       }
 
       const cleanBase = (resolvedBaseUrl || defaultBaseUrl).replace(/\/+$/, '');

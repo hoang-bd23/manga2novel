@@ -11,6 +11,7 @@ export const PROVIDERS = [
   { id: 'gemini', name: 'Google Gemini', defaultUrl: 'https://generativelanguage.googleapis.com' },
   { id: 'openai', name: 'OpenAI ChatGPT', defaultUrl: 'https://api.openai.com/v1' },
   { id: 'grok', name: 'xAI Grok', defaultUrl: 'https://api.x.ai/v1' },
+  { id: 'deepseek', name: 'DeepSeek', defaultUrl: 'https://api.deepseek.com/v1' },
   { id: 'custom', name: 'Custom (Tương thích OpenAI)', defaultUrl: '' }
 ];
 
@@ -20,7 +21,7 @@ Nhiệm vụ của bạn là chuyển đổi hình ảnh trang truyện tranh n�
 Hãy tuân thủ nghiêm ngặt các quy tắc sau:
 1. XÁC ĐỊNH NHÂN VẬT & LỜI THOẠI:
    - Hãy đọc thật kỹ và trích xuất TOÀN BỘ lời thoại, lời dẫn, hay độc thoại nội tâm xuất hiện trên trang truyện.
-   - Giữ nguyên 100% nội dung lời thoại gốc, KHÔNG ĐƯỢC tự ý lược bỏ hay thay đổi từ ngữ.
+   - Giữ nguyên ý nghĩa lời thoại gốc, KHÔNG ĐƯỢC tự ý lược bỏ hay thay đổi ý nghĩa.
    - Định dạng lời thoại theo phong cách tiểu thuyết tiếng Việt chuẩn (sử dụng dấu gạch ngang đầu dòng "- ..." hoặc dấu ngoặc kép "..."). Chỉ rõ ai đang nói bằng các cụm từ mô tả giọng điệu (ví dụ: "... - cậu nói khàn khàn", "... - cô thốt lên kinh ngạc").
 
 2. BỔ SUNG MÔ TẢ CHI TIẾT (LÀM GIÀU VĂN BẢN):
@@ -33,7 +34,13 @@ Hãy tuân thủ nghiêm ngặt các quy tắc sau:
 3. THỨ TỰ ĐỌC TRUYỆN:
    - Đọc theo đúng chuẩn manga (từ PHẢI qua TRÁI, từ TRÊN xuống DƯỚI) hoặc chuẩn webtoon (từ TRÊN xuống DƯỚI) để đảm bảo trình tự cốt truyện diễn ra chính xác.
 
-4. ĐỊNH DẠNG ĐẦU RA:
+4. NGÔN NGỮ — QUY TẮC BẮT BUỘC (QUAN TRỌNG NHẤT):
+   - TOÀN BỘ nội dung đầu ra PHẢI được viết bằng tiếng Việt, KHÔNG NGOẠI LỆ.
+   - Mọi lời thoại của nhân vật (dù gốc là tiếng Nhật, tiếng Anh, tiếng Trung, tiếng Hàn hay bất kỳ ngôn ngữ nào khác) ĐỀU PHẢI được dịch sang tiếng Việt tự nhiên, trôi chảy.
+   - Các âm thanh (SFX), hiệu ứng tiếng động (ví dụ: "BOOM", "CRASH", "ドカッ", "쾅") phải được Việt hóa thành mô tả văn học (ví dụ: "một tiếng nổ vang trời", "tiếng va chạm chát chúa") hoặc phiên âm tiếng Việt gần nhất, KHÔNG giữ nguyên chữ nước ngoài.
+   - TUYỆT ĐỐI KHÔNG để lại bất kỳ từ, câu, hay đoạn văn nào bằng tiếng nước ngoài trong văn bản đầu ra.
+
+5. ĐỊNH DẠNG ĐẦU RA:
    - Chỉ trả về phần nội dung tiểu thuyết tiếng Việt được viết chỉn chu.
    - Không thêm lời mở đầu, lời kết, lời giải thích hay bất kỳ ghi chú ngoài lề nào khác.`;
 

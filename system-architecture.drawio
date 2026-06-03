@@ -1,0 +1,271 @@
+<mxfile host="app.diagrams.net" modified="2026-06-03" version="21.0.0">
+  <diagram name="MangaScribe AI - System Architecture" id="system-arch">
+    <mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===================== TITLE ===================== -->
+        <mxCell id="title" value="MangaScribe AI — Kiến Trúc Hệ Thống Toàn Diện" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#1a1a2e;" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="1000" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== INTERNET ZONE ===================== -->
+        <mxCell id="zone-internet" value="🌐 INTERNET" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=4;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="30" y="80" width="300" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="user-pc" value="👤 Người dùng PC&#xa;(Chrome/Edge)" style="shape=mxgraph.cisco.computers_and_peripherals.pc;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="zone-internet">
+          <mxGeometry x="30" y="60" width="60" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="user-mobile" value="📱 Người dùng&#xa;Mobile" style="shape=mxgraph.android.phone2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="zone-internet">
+          <mxGeometry x="130" y="60" width="40" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="user-label" value="HTTPS Request" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontColor=#6c8ebf;" vertex="1" parent="zone-internet">
+          <mxGeometry x="30" y="140" width="240" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="google-oauth" value="🔑 Google OAuth API&#xa;(accounts.google.com)&#xa;Đăng nhập Google" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="zone-internet">
+          <mxGeometry x="30" y="165" width="240" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== EXTERNAL AI APIS ===================== -->
+        <mxCell id="zone-ai" value="🤖 AI SERVICES (External)" style="swimlane;startSize=30;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;arcSize=4;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="30" y="310" width="300" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-gemini" value="✨ Google Gemini&#xa;gemini-2.5-flash / pro" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="zone-ai">
+          <mxGeometry x="15" y="45" width="120" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-grok" value="⚡ xAI Grok&#xa;grok-2-vision" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="zone-ai">
+          <mxGeometry x="155" y="45" width="120" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-openai" value="🧠 OpenAI&#xa;gpt-4o / gpt-4v" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="zone-ai">
+          <mxGeometry x="15" y="105" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-openrouter" value="🔀 OpenRouter&#xa;Multi-model Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="zone-ai">
+          <mxGeometry x="155" y="105" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== CLOUDFLARE ===================== -->
+        <mxCell id="zone-cloudflare" value="☁️ CLOUDFLARE EDGE" style="swimlane;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;rounded=1;arcSize=4;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="370" y="80" width="280" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="cf-dns" value="🌐 Cloudflare DNS&#xa;manga2novel.buiduchoang.dev&#xa;→ 101.99.47.176 (Proxied 🟠)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="zone-cloudflare">
+          <mxGeometry x="15" y="45" width="250" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cf-ssl" value="🔒 SSL/TLS: Full (strict)&#xa;Cloudflare Universal SSL&#xa;*.buiduchoang.dev (Active)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="zone-cloudflare">
+          <mxGeometry x="15" y="105" width="250" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cf-protect" value="🛡️ DDoS Protection | WAF | CDN Cache" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="zone-cloudflare">
+          <mxGeometry x="15" y="165" width="250" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== CMC CLOUD VPC ===================== -->
+        <mxCell id="zone-vpc" value="🏢 CMC CLOUD — hoang-vpc (CIDR: 192.168.10.0/24)" style="swimlane;startSize=35;fillColor=#f5f5f5;strokeColor=#666666;rounded=1;arcSize=2;fontStyle=1;fontSize=14;fontColor=#333333;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="690" y="60" width="940" height="760" as="geometry" />
+        </mxCell>
+
+        <!-- hoang-subnet-1 -->
+        <mxCell id="zone-subnet" value="📡 hoang-subnet-1 (CIDR: 192.168.10.0/25)  |  Default Gateway: 192.168.10.1" style="swimlane;startSize=30;fillColor=#f9f9e0;strokeColor=#888800;rounded=1;arcSize=3;fontStyle=1;fontSize=11;dashed=1;" vertex="1" parent="zone-vpc">
+          <mxGeometry x="20" y="50" width="900" height="700" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== APP SERVER VPS ===================== -->
+        <mxCell id="zone-app" value="🖥️ App Server VPS — hoang-esc-test2" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;arcSize=4;fontStyle=1;fontSize=12;" vertex="1" parent="zone-subnet">
+          <mxGeometry x="20" y="50" width="340" height="630" as="geometry" />
+        </mxCell>
+
+        <!-- App Server Network Interfaces -->
+        <mxCell id="app-nic-pub" value="🌐 ens3 (Public)&#xa;IP: 101.99.47.176/24&#xa;Gateway: 101.99.47.1&#xa;SG: hoang-sg-test" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="zone-app">
+          <mxGeometry x="10" y="40" width="150" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="app-nic-priv" value="🔒 ens4 (Private)&#xa;IP: 192.168.10.11/25&#xa;Gateway: 192.168.10.1&#xa;SG: hoang-sg-test" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="zone-app">
+          <mxGeometry x="175" y="40" width="150" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Nginx -->
+        <mxCell id="app-nginx" value="⚙️ Nginx (Reverse Proxy)&#xa;Listen: Port 80 (HTTP) → Redirect 301&#xa;Listen: Port 443 (HTTPS) → SSL Cert&#xa;Let's Encrypt: manga2novel.buiduchoang.dev&#xa;proxy_pass → http://127.0.0.1:3000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=10;" vertex="1" parent="zone-app">
+          <mxGeometry x="10" y="120" width="315" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Next.js -->
+        <mxCell id="app-nextjs" value="▲ Next.js 16 App (PM2)&#xa;Process: manga2novel | Status: online&#xa;Port: 3000 | Memory: ~55MB&#xa;pm2 startup + pm2 save (auto-restart)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d6a7;strokeColor=#2e7d32;fontSize=10;fontStyle=1;" vertex="1" parent="zone-app">
+          <mxGeometry x="10" y="215" width="315" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- App Core Features -->
+        <mxCell id="app-features" value="📦 Core Application Features" style="swimlane;startSize=22;fillColor=#e8f5e9;strokeColor=#81c784;fontSize=10;fontStyle=1;" vertex="1" parent="zone-app">
+          <mxGeometry x="10" y="300" width="315" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="feat-auth" value="🔑 NextAuth.js — Google OAuth Login&#xa;NEXTAUTH_URL: manga2novel.buiduchoang.dev&#xa;Callback: /api/auth/callback/google" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#81c784;fontSize=9;" vertex="1" parent="app-features">
+          <mxGeometry x="8" y="28" width="297" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="feat-ai" value="🤖 AI Translation Engine (Multi-model)&#xa;Pool Routing: Gemini → Grok → OpenAI&#xa;AES-256-GCM Encrypted API Keys&#xa;ENCRYPTION_KEY: 32-char secret" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#81c784;fontSize=9;" vertex="1" parent="app-features">
+          <mxGeometry x="8" y="75" width="297" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="feat-storage-hook" value="💾 Storage Upload Hook (db-server.js)&#xa;Mode A: Server/NFS → Write file to disk&#xa;Mode B: Cloud S3 → Upload to S3 bucket&#xa;Mode C: Device → Browser-managed only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#81c784;fontSize=9;" vertex="1" parent="app-features">
+          <mxGeometry x="8" y="132" width="297" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- NFS mount point -->
+        <mxCell id="app-nfs-mount" value="📂 NFS Mount Point&#xa;Local: /var/www/manga2novel/public/uploads&#xa;← → Remote: 192.168.10.13:/var/manga_storage&#xa;Protocol: NFSv4.2 | Auto-mount: /etc/fstab&#xa;Used when Storage Mode = 'server'" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=9;dashed=1;strokeWidth=2;" vertex="1" parent="zone-app">
+          <mxGeometry x="10" y="510" width="315" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== DATABASE VPS ===================== -->
+        <mxCell id="zone-db" value="🗄️ Database VPS — hoang-esc-db" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;arcSize=4;fontStyle=1;fontSize=12;" vertex="1" parent="zone-subnet">
+          <mxGeometry x="390" y="50" width="240" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="db-nic-priv" value="🔒 ens3 (Private Only)&#xa;IP: 192.168.10.12/25&#xa;Gateway: 192.168.10.1&#xa;SG: hoang-sg-test / default" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="zone-db">
+          <mxGeometry x="10" y="40" width="220" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="db-postgres" value="🐘 PostgreSQL 16&#xa;Port: 5432&#xa;listen_addresses = '*'&#xa;pg_hba: Allow 192.168.10.11/32&#xa;Auth: scram-sha-256" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1976d2;fontSize=10;fontStyle=1;" vertex="1" parent="zone-db">
+          <mxGeometry x="10" y="120" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="db-schema" value="📋 Database Schema (manga2novel)&#xa;┌─ users (id, email, name)&#xa;├─ projects (id, user_id, title, url)&#xa;├─ pages (id, project_id, page_num,&#xa;│   image_src, image_type,&#xa;│   novel_text, status, logs)&#xa;├─ api_configs (encrypted keys)&#xa;└─ storage_configs (type, creds)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;align=left;" vertex="1" parent="zone-db">
+          <mxGeometry x="10" y="215" width="220" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="db-conn" value="DATABASE_URL=&#xa;postgresql://db_user:***@&#xa;192.168.10.12:5432/manga2novel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1976d2;fontSize=9;fontStyle=2;" vertex="1" parent="zone-db">
+          <mxGeometry x="10" y="368" width="220" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== STORAGE VPS ===================== -->
+        <mxCell id="zone-storage" value="💾 Storage VPS — hoang-esc-storage-test" style="swimlane;startSize=30;fillColor=#f8cecc;strokeColor=#b85450;rounded=1;arcSize=4;fontStyle=1;fontSize=12;" vertex="1" parent="zone-subnet">
+          <mxGeometry x="660" y="50" width="220" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="st-nic-priv" value="🔒 ens3 (Private Only)&#xa;IP: 192.168.10.13/25&#xa;Gateway: 192.168.10.1&#xa;SG: hoang-sg-test / default" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="zone-storage">
+          <mxGeometry x="10" y="40" width="200" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="st-nfs" value="📡 NFS Server&#xa;nfs-kernel-server&#xa;Port: 2049 (TCP/UDP)&#xa;Port: 111 rpcbind" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#c62828;fontSize=10;fontStyle=1;" vertex="1" parent="zone-storage">
+          <mxGeometry x="10" y="120" width="200" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="st-exports" value="📄 /etc/exports&#xa;/var/manga_storage&#xa;  192.168.10.11(rw,sync,&#xa;  no_subtree_check,&#xa;  no_root_squash)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;align=left;" vertex="1" parent="zone-storage">
+          <mxGeometry x="10" y="200" width="200" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="st-dir" value="📁 /var/manga_storage/&#xa;  📁 projects/&#xa;    📁 [projectId]/&#xa;      📁 pages/    ← .jpg/.png&#xa;      📁 novels/  ← .txt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;align=left;" vertex="1" parent="zone-storage">
+          <mxGeometry x="10" y="300" width="200" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== SECURITY GROUPS ===================== -->
+        <mxCell id="zone-sg" value="🛡️ Security Groups (CMC Cloud)" style="swimlane;startSize=25;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;arcSize=4;fontStyle=1;fontSize=11;" vertex="1" parent="zone-subnet">
+          <mxGeometry x="20" y="510" width="860" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="sg-custom" value="hoang-sg-test (Custom SG)&#xa;—————————————————&#xa;✅ INBOUND:&#xa;TCP 22 (SSH) — 0.0.0.0/0&#xa;TCP 80 (HTTP) — 0.0.0.0/0&#xa;TCP 443 (HTTPS) — 0.0.0.0/0&#xa;TCP 5432 (PostgreSQL) — 0.0.0.0/0&#xa;TCP/UDP 2049 (NFS) — 0.0.0.0/0&#xa;TCP/UDP 111 (rpcbind) — 0.0.0.0/0&#xa;✅ OUTBOUND: All traffic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#f9a825;fontSize=9;align=left;" vertex="1" parent="zone-sg">
+          <mxGeometry x="10" y="35" width="250" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="sg-default" value="default (System Default SG)&#xa;—————————————————&#xa;✅ INBOUND:&#xa;ALL ICMP — 0.0.0.0/0&#xa;ALL TCP — 0.0.0.0/0&#xa;ALL UDP — 0.0.0.0/0&#xa;SSH 22, HTTP 80, HTTPS 443&#xa;Passive Ports 50000-50100&#xa;✅ OUTBOUND: All traffic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#f9a825;fontSize=9;align=left;" vertex="1" parent="zone-sg">
+          <mxGeometry x="280" y="35" width="250" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="sg-mapping" value="🗺️ Security Group Mapping&#xa;——————————————————&#xa;App Server ens3 (101.99.47.176) → hoang-sg-test&#xa;App Server ens4 (192.168.10.11) → hoang-sg-test&#xa;  ⚠️ Detach+Reattach required to fix SG assignment&#xa;DB VPS ens3 (192.168.10.12) → default&#xa;Storage VPS ens3 (192.168.10.13) → hoang-sg-test" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#f9a825;fontSize=9;align=left;" vertex="1" parent="zone-sg">
+          <mxGeometry x="550" y="35" width="300" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== EXTERNAL CLOUD STORAGE ===================== -->
+        <mxCell id="zone-s3" value="☁️ Cloud Storage Options (User BYOS)" style="swimlane;startSize=30;fillColor=#f3e5f5;strokeColor=#7b1fa2;rounded=1;arcSize=4;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="310" width="270" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-aws" value="🪣 AWS S3&#xa;s3.amazonaws.com" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=10;" vertex="1" parent="zone-s3">
+          <mxGeometry x="10" y="40" width="115" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-r2" value="☁️ Cloudflare R2&#xa;r2.cloudflarestorage.com" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=10;" vertex="1" parent="zone-s3">
+          <mxGeometry x="145" y="40" width="115" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-gcs" value="🌐 Google Cloud Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=10;" vertex="1" parent="zone-s3">
+          <mxGeometry x="10" y="100" width="115" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-supabase" value="⚡ Supabase Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontSize=10;" vertex="1" parent="zone-s3">
+          <mxGeometry x="145" y="100" width="115" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-note" value="All S3-compatible APIs&#xa;Storage mode: 'cloud'&#xa;Configured per-user in Settings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8eaf6;strokeColor=#7b1fa2;fontSize=9;fontStyle=2;" vertex="1" parent="zone-s3">
+          <mxGeometry x="10" y="155" width="250" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== STORAGE MODES LEGEND ===================== -->
+        <mxCell id="zone-modes" value="📊 Storage Mode Comparison" style="swimlane;startSize=30;fillColor=#fce4ec;strokeColor=#c2185b;rounded=1;arcSize=4;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="590" width="270" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-server" value="🖥️ Mode: server (NFS) ✅ RECOMMENDED&#xa;→ Files saved to /public/uploads (NFS)&#xa;→ image_src = /uploads/... (short URL)&#xa;→ DB stays lightweight" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#c2185b;fontSize=9;align=left;" vertex="1" parent="zone-modes">
+          <mxGeometry x="10" y="40" width="250" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-cloud" value="☁️ Mode: cloud (S3)&#xa;→ Files uploaded to S3/R2 CDN&#xa;→ image_src = public S3 URL&#xa;→ DB stays lightweight + CDN speed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#c2185b;fontSize=9;align=left;" vertex="1" parent="zone-modes">
+          <mxGeometry x="10" y="105" width="250" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-device" value="📱 Mode: device (Browser)&#xa;→ No file written server-side&#xa;→ image_src = base64 data URL in DB&#xa;→ ⚠️ DB grows large with images!" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#c2185b;fontSize=9;align=left;" vertex="1" parent="zone-modes">
+          <mxGeometry x="10" y="170" width="250" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== ARROWS — USER → CLOUDFLARE ===================== -->
+        <mxCell id="arr-user-cf" value="HTTPS&#xa;(Encrypted)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="zone-internet" target="zone-cloudflare">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CLOUDFLARE → APP SERVER -->
+        <mxCell id="arr-cf-app" value="HTTPS → Port 443&#xa;Full (strict) SSL&#xa;Cloudflare IP Range" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#d79b00;strokeWidth=2;fontSize=9;" edge="1" parent="1" source="zone-cloudflare" target="app-nginx">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- NGINX → NEXTJS -->
+        <mxCell id="arr-nginx-next" value="proxy_pass&#xa;:3000" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;strokeColor=#388e3c;strokeWidth=2;fontSize=9;" edge="1" parent="1" source="app-nginx" target="app-nextjs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- APP → DB -->
+        <mxCell id="arr-app-db" value="PostgreSQL&#xa;TCP:5432&#xa;Private IP&#xa;192.168.10.12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#1976d2;strokeWidth=2;dashed=0;fontSize=9;" edge="1" parent="1" source="app-features" target="db-postgres">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1085" y="490" />
+              <mxPoint x="1085" y="335" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- APP → NFS STORAGE -->
+        <mxCell id="arr-app-nfs" value="NFS Mount&#xa;TCP/UDP:2049&#xa;NFSv4.2&#xa;192.168.10.13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;dashed=1;fontSize=9;" edge="1" parent="1" source="app-nfs-mount" target="st-nfs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- APP → AI SERVICES -->
+        <mxCell id="arr-app-ai" value="HTTPS API Calls&#xa;(Encrypted API Keys&#xa;AES-256-GCM)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;fontSize=9;" edge="1" parent="1" source="feat-ai" target="zone-ai">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- APP → GOOGLE AUTH -->
+        <mxCell id="arr-app-auth" value="OAuth 2.0&#xa;Callback" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;strokeColor=#d6b656;strokeWidth=1;fontSize=9;dashed=1;" edge="1" parent="1" source="feat-auth" target="zone-internet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- APP → S3 (CLOUD MODE) -->
+        <mxCell id="arr-app-s3" value="HTTPS&#xa;S3 API&#xa;(cloud mode)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;strokeColor=#7b1fa2;strokeWidth=1;dashed=1;fontSize=9;" edge="1" parent="1" source="feat-storage-hook" target="zone-s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== DATA FLOW LEGEND ===================== -->
+        <mxCell id="zone-legend" value="📖 Data Flow Legend" style="swimlane;startSize=25;fillColor=#f5f5f5;strokeColor=#999999;rounded=1;arcSize=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="30" y="510" width="310" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" value="━━━━ HTTPS / SSL Traffic" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#d79b00;" vertex="1" parent="zone-legend">
+          <mxGeometry x="10" y="30" width="290" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" value="━━━━ PostgreSQL DB Connection (Private)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#1976d2;" vertex="1" parent="zone-legend">
+          <mxGeometry x="10" y="55" width="290" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" value="- - - - NFS Mount (Private Network)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#b85450;" vertex="1" parent="zone-legend">
+          <mxGeometry x="10" y="80" width="290" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" value="- - - - S3 Cloud Storage API (Optional)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#7b1fa2;" vertex="1" parent="zone-legend">
+          <mxGeometry x="10" y="105" width="290" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" value="━━━━ AI API Calls (External)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#9673a6;" vertex="1" parent="zone-legend">
+          <mxGeometry x="10" y="130" width="290" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== ENV SUMMARY ===================== -->
+        <mxCell id="zone-env" value="🔐 .env Configuration (App Server)" style="swimlane;startSize=25;fillColor=#fffde7;strokeColor=#f9a825;rounded=1;arcSize=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="30" y="700" width="310" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="env-content" value="DATABASE_URL = postgresql://db_user:***@192.168.10.12:5432/manga2novel&#xa;ENCRYPTION_KEY = [32-char secret for AES-256-GCM]&#xa;NEXTAUTH_URL = https://manga2novel.buiduchoang.dev&#xa;NEXTAUTH_SECRET = [openssl rand -base64 32]&#xa;GOOGLE_CLIENT_ID = [Google Cloud Console]&#xa;GOOGLE_CLIENT_SECRET = [Google Cloud Console]" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontFamily=Courier New;" vertex="1" parent="zone-env">
+          <mxGeometry x="5" y="30" width="300" height="95" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
