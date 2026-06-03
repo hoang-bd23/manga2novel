@@ -107,6 +107,14 @@ async function migrate(client) {
   await client.query(`
     ALTER TABLE user_api_keys ADD COLUMN IF NOT EXISTS storage_configs TEXT;
   `);
+
+  // 6. Add glossary + character_analysis columns to projects (Self-healing migration)
+  await client.query(`
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS glossary TEXT DEFAULT '{}';
+  `);
+  await client.query(`
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS character_analysis TEXT DEFAULT '';
+  `);
 }
 
 // ==========================================
@@ -241,10 +249,14 @@ export async function getProject(id, userId = DEFAULT_USER_ID) {
     );
     if (res.rows.length === 0) return null;
     const row = res.rows[0];
+    let glossary = {};
+    try { glossary = row.glossary ? JSON.parse(row.glossary) : {}; } catch (e) {}
     return {
       id: row.id,
       title: row.title,
       mangaUrl: row.manga_url,
+      glossary,
+      characterAnalysis: row.character_analysis || '',
       createdAt: Number(row.created_at),
       updatedAt: Number(row.updated_at),
       userId: row.user_id
@@ -327,6 +339,14 @@ export async function updateProject(id, updates, userId = DEFAULT_USER_ID) {
       fields.push(`manga_url = $${idx++}`);
       values.push(updates.mangaUrl);
     }
+    if (updates.glossary !== undefined) {
+      fields.push(`glossary = $${idx++}`);
+      values.push(JSON.stringify(updates.glossary));
+    }
+    if (updates.characterAnalysis !== undefined) {
+      fields.push(`character_analysis = $${idx++}`);
+      values.push(updates.characterAnalysis);
+    }
     fields.push(`updated_at = $${idx++}`);
     values.push(now);
 
@@ -343,10 +363,14 @@ export async function updateProject(id, updates, userId = DEFAULT_USER_ID) {
     const res = await pgPool.query(query, values);
     if (res.rows.length === 0) return null;
     const row = res.rows[0];
+    let glossary = {};
+    try { glossary = row.glossary ? JSON.parse(row.glossary) : {}; } catch (e) {}
     return {
       id: row.id,
       title: row.title,
       mangaUrl: row.manga_url,
+      glossary,
+      characterAnalysis: row.character_analysis || '',
       createdAt: Number(row.created_at),
       updatedAt: Number(row.updated_at),
       userId: row.user_id

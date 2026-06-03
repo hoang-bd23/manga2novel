@@ -5,7 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import styles from './page.module.css';
 import { 
-  getProject, getPagesForProject, updatePage, updateProject, deletePage
+  getProject, getPagesForProject, updatePage, updateProject, deletePage,
+  analyzeCharacters, refineHonorifics
 } from '@/utils/db';
 import { convertMangaPageToNovel, DEFAULT_PROMPT } from '@/utils/gemini';
 import { 
@@ -52,6 +53,11 @@ function StudioContent() {
   const [availableConfigs, setAvailableConfigs] = useState([]);
   const [fileInstructions, setFileInstructions] = useState('');
 
+  // AI Post-processing: Character Analysis & Honorific Refinement
+  const [isAnalyzingChars, setIsAnalyzingChars] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
+  const [analyzeResult, setAnalyzeResult] = useState(null);
+  const [refineResult, setRefineResult] = useState(null);
 
   // Debounce save timer
   const saveTimeoutRef = useRef(null);
@@ -1222,11 +1228,96 @@ Lưu ý:
             </div>
           ) : (
             <div className={styles.glossaryPanel}>
+
+              {/* === AI ACTIONS === */}
+              <div className={styles.glossaryField} style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.08))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '10px', padding: '12px' }}>
+                <label className={styles.glossaryLabel} style={{ color: '#a78bfa', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={13} /> Hành động AI
+                </label>
+
+                {/* Button: Analyze Characters */}
+                <button
+                  id="btn-analyze-characters"
+                  onClick={async () => {
+                    setIsAnalyzingChars(true);
+                    setAnalyzeResult(null);
+                    try {
+                      const result = await analyzeCharacters(projectId);
+                      setAnalyzeResult({ type: 'success', msg: `Đã phân tích xong ${result.pagesAnalyzed} trang, tìm thấy ${result.characters?.length || 0} nhân vật.` });
+                      // Reload project to get updated glossary
+                      const updatedProject = await getProject(projectId);
+                      setProject(updatedProject);
+                    } catch (err) {
+                      setAnalyzeResult({ type: 'error', msg: err.message });
+                    } finally {
+                      setIsAnalyzingChars(false);
+                    }
+                  }}
+                  disabled={isAnalyzingChars || isRefining}
+                  style={{
+                    width: '100%', padding: '9px 12px', borderRadius: '7px', border: 'none',
+                    background: isAnalyzingChars ? 'rgba(139,92,246,0.3)' : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                    color: '#fff', fontWeight: '600', fontSize: '12px', cursor: isAnalyzingChars ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px'
+                  }}
+                >
+                  {isAnalyzingChars ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Đang phân tích...</> : <><Sparkles size={13} /> 🔍 Phân tích Nhân vật tự động</>}
+                </button>
+
+                {/* Button: Refine Honorifics */}
+                <button
+                  id="btn-refine-honorifics"
+                  onClick={async () => {
+                    const completedCount = pages.filter(p => p.status === 'completed').length;
+                    if (!window.confirm(`Sẽ viết lại xưng hô cho ${completedCount} trang đã dịch.\nQuá trình này sẽ gọi AI ${completedCount} lần và mất vài phút.\n\nTiếp tục?`)) return;
+                    setIsRefining(true);
+                    setRefineResult(null);
+                    try {
+                      const result = await refineHonorifics(projectId);
+                      setRefineResult({ type: 'success', msg: `Hoàn tất! ${result.pagesProcessed}/${result.totalPages} trang được chỉnh sửa (${result.keysUsed} key song song).` });
+                      // Reload pages to reflect updated novel_text
+                      const updatedPages = await getPagesForProject(projectId);
+                      setPages(updatedPages.map(p => ({ ...p, novelText: (p.novelText || '').normalize('NFC') })));
+                      if (activePage) {
+                        const updated = updatedPages.find(p => p.id === activePage.id);
+                        if (updated) setActivePage({ ...updated, novelText: (updated.novelText || '').normalize('NFC') });
+                      }
+                    } catch (err) {
+                      setRefineResult({ type: 'error', msg: err.message });
+                    } finally {
+                      setIsRefining(false);
+                    }
+                  }}
+                  disabled={isAnalyzingChars || isRefining}
+                  style={{
+                    width: '100%', padding: '9px 12px', borderRadius: '7px', border: 'none',
+                    background: isRefining ? 'rgba(59,130,246,0.3)' : 'linear-gradient(135deg, #1d4ed8, #1e40af)',
+                    color: '#fff', fontWeight: '600', fontSize: '12px', cursor: isRefining ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                  }}
+                >
+                  {isRefining ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Đang chỉnh sửa...</> : <><RefreshCw size={13} /> ✏️ Chỉnh sửa Xưng hô toàn tập</>}
+                </button>
+
+                {/* Result feedback */}
+                {analyzeResult && (
+                  <div style={{ marginTop: '8px', padding: '7px 10px', borderRadius: '6px', fontSize: '11px', background: analyzeResult.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: analyzeResult.type === 'success' ? '#86efac' : '#fca5a5', border: `1px solid ${analyzeResult.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                    {analyzeResult.type === 'success' ? '✅ ' : '❌ '}{analyzeResult.msg}
+                  </div>
+                )}
+                {refineResult && (
+                  <div style={{ marginTop: '6px', padding: '7px 10px', borderRadius: '6px', fontSize: '11px', background: refineResult.type === 'success' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: refineResult.type === 'success' ? '#86efac' : '#fca5a5', border: `1px solid ${refineResult.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                    {refineResult.type === 'success' ? '✅ ' : '❌ '}{refineResult.msg}
+                  </div>
+                )}
+              </div>
+
+              {/* === MANUAL GLOSSARY FIELDS === */}
               <div className={styles.glossaryField}>
-                <label className={styles.glossaryLabel}>Xưng hô & Nhân vật</label>
+                <label className={styles.glossaryLabel}>Xưng hô &amp; Nhân vật</label>
                 <textarea
                   className={styles.glossaryTextarea}
-                  placeholder="Ví dụ:&#13;Naruto (cậu/tôi) - Sasuke (cậu/tớ)&#13;Gọi nữ phụ là cô ta"
+                  placeholder={"Ví dụ:\nNaruto (cậu/tôi) - Sasuke (cậu/tớ)\nGọi nữ phụ là cô ta"}
                   value={project?.glossary?.pronouns || ''}
                   onChange={(e) => handleGlossaryChange('pronouns', e.target.value)}
                 />
@@ -1236,7 +1327,7 @@ Lưu ý:
                 <label className={styles.glossaryLabel}>Văn phong chung</label>
                 <textarea
                   className={styles.glossaryTextarea}
-                  placeholder="Ví dụ:&#13;Văn phong kiếm hiệp, nghiêm túc, tả cảnh chi tiết, giữ tông trầm ấm"
+                  placeholder={"Ví dụ:\nVăn phong kiếm hiệp, nghiêm túc, tả cảnh chi tiết, giữ tông trầm ấm"}
                   value={project?.glossary?.style || ''}
                   onChange={(e) => handleGlossaryChange('style', e.target.value)}
                 />
@@ -1246,7 +1337,7 @@ Lưu ý:
                 <label className={styles.glossaryLabel}>Thuật ngữ đặc biệt</label>
                 <textarea
                   className={styles.glossaryTextarea}
-                  placeholder="Ví dụ:&#13;Chakra -> Luân xa&#13;Mana -> Ma lực"
+                  placeholder={"Ví dụ:\nChakra -> Luân xa\nMana -> Ma lực"}
                   value={project?.glossary?.keywords || ''}
                   onChange={(e) => handleGlossaryChange('keywords', e.target.value)}
                 />

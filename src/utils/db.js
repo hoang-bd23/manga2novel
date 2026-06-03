@@ -82,3 +82,41 @@ export async function saveStorageConfigs(storageConfigs) {
 export async function testS3Connection(storageConfigs) {
   return await callDbApi('testS3Connection', storageConfigs);
 }
+
+// ==========================================
+// AI POST-PROCESSING — Character Analysis & Honorific Refinement
+// ==========================================
+
+/**
+ * Analyzes all translated pages to identify characters and relationships.
+ * Saves results to project.characterAnalysis and auto-fills project.glossary.pronouns.
+ */
+export async function analyzeCharacters(projectId) {
+  const res = await fetch('/api/analyze-characters', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ projectId })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+/**
+ * Rewrites all translated pages to ensure consistent Vietnamese honorifics.
+ * Uses parallel key distribution with 2s delay per key for rate-limit safety.
+ */
+export async function refineHonorifics(projectId) {
+  const res = await fetch('/api/refine-honorifics', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ projectId })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
